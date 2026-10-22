@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/bep/helpers/envhelpers"
 	"github.com/rogpeppe/go-internal/testscript"
@@ -25,21 +22,21 @@ func TestScripts(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	testscript.Main(m, map[string]func(){
-		"mycontext": func() {
-			fmt.Println(strings.Join(os.Args[1:], " "))
-			time.Sleep(10 * time.Millisecond)
-		},
+		"mycontext": main,
 	})
 }
 
 func testSetupFunc() func(env *testscript.Env) error {
 	sourceDir, _ := os.Getwd()
 	return func(env *testscript.Env) error {
-		var keyVals []string
-		// Add some environment variables to the test script.
-		keyVals = append(keyVals, "SOURCE", sourceDir)
-		envhelpers.SetEnvVars(&env.Vars, keyVals...)
-
+		envhelpers.SetEnvVars(&env.Vars,
+			"SOURCE", sourceDir,
+			"GIT_CONFIG_NOSYSTEM", "1",
+			"GIT_AUTHOR_NAME", "Test",
+			"GIT_AUTHOR_EMAIL", "test@example.com",
+			"GIT_COMMITTER_NAME", "Test",
+			"GIT_COMMITTER_EMAIL", "test@example.com",
+		)
 		return nil
 	}
 }

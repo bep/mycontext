@@ -13,7 +13,7 @@ execrpc             godartsass          golibtemplate       lazycache           
 gitjoin.txt         gogitignore         golocales           logg                simplecobra
 ```
 
-A list of Git repositories managed by the content of `gitjoin.txt`. In the above, we could store per repository/branch context on the form `mymonorepo/bep/gocode/libs/.mycontext/debounce/mybranch`.
+A list of Git repositories managed by the content of `gitjoin.txt`. In the above, the context for the `mybranch` branch in `debounce` lives in `mymonorepo/bep/gocode/libs/.mycontext/debounce/mybranch`.
 
 That's it as far as schema goes. We're not enforcing any restrictions on what gets stored inside each context folder, but I'll list some of my imagined uses of this:
 
@@ -21,9 +21,51 @@ That's it as far as schema goes. We're not enforcing any restrictions on what ge
 * Store documents received from security researchers that describes a security issue to be fixed.
 * Store notes/design documents about a given feature.
 
-The CLI would be simple, we would need commands that:
+## Specification
 
-* Creates a new branch in a named repo, e.g. `mycontext new debounce mybranch`; I think it makes sense to also checkout (and create if it doesn't exist) the given branch in that repo.
-* Removes a branch (but leave the Git branch alone)
-* Prunes contexts for non-existing branches.
+`mycontext` does not depend on `gitjoin`; it works with any Git repository. All commands are run from inside the repository and operate on that repository only.
 
+* The context for a branch lives in `<repo>/../.mycontext/<repo dir name>/<branch>/`.
+* Branch names with slashes nest as directories, e.g. `feature/foo` lives in `.mycontext/myrepo/feature/foo/`.
+* A context directory is marked by an empty `.mycontext-branch` file. This is how `mycontext` tells a context apart from a sub directory inside one.
+* `.mycontext` is meant to be committed (e.g. into the parent `gitjoin` repository). Files that only make sense on one machine go into the context's `.local/` sub directory, which is ignored by `.mycontext/.gitignore`, created by `mycontext` the first time it creates a context.
+* `mycontext` never commits anything, and does not touch your Git branches.
+
+## Usage
+
+```bash
+mycontext path [--create] [--local]  # Print the context directory for the current branch.
+mycontext ls                         # List this repository's contexts; contexts without a local branch are marked (gone).
+mycontext rm [branch]                # Remove a context (defaults to the current branch).
+mycontext mv <old> <new>             # Rename a context, e.g. after renaming the branch.
+mycontext prune [--dry-run]          # Remove contexts for local branches that no longer exist.
+```
+
+`mycontext path` is the integration point for other tools, e.g. `cd $(mycontext path --create)`.
+
+### Claude Code
+
+Store the session ID for the current branch with a `SessionStart` [hook](https://docs.claude.com/en/docs/claude-code/hooks) in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r .session_id > \"$(mycontext path --create --local)/claude-session\""
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+And resume it with:
+
+```bash
+claude --resume $(cat $(mycontext path --local)/claude-session)
+```

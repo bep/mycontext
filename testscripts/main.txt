@@ -1,4 +1,73 @@
 # See https://pkg.go.dev/github.com/rogpeppe/go-internal/testscript
 
-mycontext 'This is a test.'
-stdout 'This is a test.'
+! mycontext path
+stderr 'not inside a Git repository'
+
+exec git init -q -b main repo
+cd repo
+exec git commit -q --allow-empty -m init
+
+! mycontext path
+stderr 'no context for branch "main"; use --create'
+
+mycontext path --create
+stdout '\.mycontext[/\\]repo[/\\]main\n$'
+exists ../.mycontext/repo/main/.mycontext-branch
+cmp ../.mycontext/.gitignore $WORK/golden/gitignore.txt
+
+mycontext path
+stdout '\.mycontext[/\\]repo[/\\]main\n$'
+
+mycontext path --create --local
+stdout 'main[/\\]\.local\n$'
+exists ../.mycontext/repo/main/.local
+
+# Branches with slashes nest; user sub directories are not contexts.
+exec git switch -q -c feature/foo
+mycontext path --create
+stdout 'repo[/\\]feature[/\\]foo\n$'
+mkdir ../.mycontext/repo/feature/foo/docs
+mycontext ls
+cmp stdout $WORK/golden/ls1.txt
+
+mycontext mv feature/foo feature/bar
+! exists ../.mycontext/repo/feature/foo
+exists ../.mycontext/repo/feature/bar/docs
+! mycontext mv feature/foo feature/bar
+stderr 'no context for branch "feature/foo"'
+! mycontext mv main feature/bar
+stderr 'already exists'
+
+exec git switch -q main
+exec git branch -q -D feature/foo
+mycontext ls
+cmp stdout $WORK/golden/ls2.txt
+
+mycontext prune --dry-run
+stdout '^would remove feature/bar\n$'
+exists ../.mycontext/repo/feature/bar
+
+mycontext prune
+stdout '^removed feature/bar\n$'
+! exists ../.mycontext/repo/feature
+
+mycontext rm
+! exists ../.mycontext/repo
+exists ../.mycontext/.gitignore
+! mycontext rm
+stderr 'no context for branch "main"'
+! mycontext rm ../foo
+stderr 'invalid branch name'
+
+exec git switch -q --detach
+! mycontext path
+stderr 'HEAD is detached'
+
+-- golden/gitignore.txt --
+.local/
+-- golden/ls1.txt --
+* feature/foo
+  main
+-- golden/ls2.txt --
+  feature/bar (gone)
+* main
