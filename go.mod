@@ -1,4 +1,4 @@
-module github.com/bep/gomaintemplate
+module github.com/bep/mycontext
 
 go 1.26
 
