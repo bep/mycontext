@@ -36,19 +36,18 @@ type rootCommand struct {
 
 func newRootCommand(out io.Writer) *rootCommand {
 	r := &rootCommand{}
-	var create, local, dryRun bool
+	var local, dryRun bool
 
 	r.commands = []simplecobra.Commander{
 		&simpleCommand{
 			name:  "path",
-			short: "Print the context directory for the current branch",
+			short: "Print the context directory for the current branch, creating it if needed",
 			args:  cobra.NoArgs,
 			withc: func(cmd *cobra.Command) {
-				cmd.Flags().BoolVar(&create, "create", false, "create the context if it does not exist")
 				cmd.Flags().BoolVar(&local, "local", false, "print the machine-local (not committed) subdirectory")
 			},
 			run: func(args []string) error {
-				dir, err := r.s.path(create, local)
+				dir, err := r.s.path(local)
 				if err != nil {
 					return err
 				}
