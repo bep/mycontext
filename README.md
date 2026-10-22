@@ -34,14 +34,14 @@ That's it as far as schema goes. We're not enforcing any restrictions on what ge
 ## Usage
 
 ```bash
-mycontext path [--create] [--local]  # Print the context directory for the current branch.
+mycontext path [--local]             # Print the context directory for the current branch, creating it if needed.
 mycontext ls                         # List this repository's contexts; contexts without a local branch are marked (gone).
 mycontext rm [branch]                # Remove a context (defaults to the current branch).
 mycontext mv <old> <new>             # Rename a context, e.g. after renaming the branch.
 mycontext prune [--dry-run]          # Remove contexts for local branches that no longer exist.
 ```
 
-`mycontext path` is the integration point for other tools, e.g. `cd $(mycontext path --create)`.
+`mycontext path` is the integration point for other tools, e.g. `cd $(mycontext path)`.
 
 ### Claude Code
 
@@ -55,7 +55,7 @@ Store the session ID for the current branch with a `SessionStart` [hook](https:/
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r .session_id > \"$(mycontext path --create --local)/claude-session\""
+            "command": "jq -r .session_id > \"$(mycontext path --local)/claude-session\""
           }
         ]
       }

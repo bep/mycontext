@@ -77,7 +77,7 @@ func (s *store) exists(dir string) bool {
 	return err == nil
 }
 
-func (s *store) path(create, local bool) (string, error) {
+func (s *store) path(local bool) (string, error) {
 	branch, err := s.currentBranch()
 	if err != nil {
 		return "", err
@@ -86,19 +86,15 @@ func (s *store) path(create, local bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if create {
+	if !s.exists(dir) {
 		if err := s.create(dir); err != nil {
 			return "", err
 		}
-	} else if !s.exists(dir) {
-		return "", fmt.Errorf("no context for branch %q; use --create to create it", branch)
 	}
 	if local {
 		dir = filepath.Join(dir, localDirName)
-		if create {
-			if err := os.MkdirAll(dir, 0o755); err != nil {
-				return "", err
-			}
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return "", err
 		}
 	}
 	return dir, nil
