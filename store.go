@@ -16,13 +16,13 @@ import (
 )
 
 const (
-	contextsDirName = ".mycontext"
+	contextsDirName = "_mycontext"
 	markerFilename  = ".mycontext-branch"
 	localDirName    = ".local"
 )
 
 // store manages the contexts of one Git repository,
-// stored in <repo>/../.mycontext/<repo dir name>/<branch>.
+// stored in <repo>/../_mycontext/<repo dir name>/<branch>.
 type store struct {
 	repoDir string
 	root    string

@@ -106,7 +106,7 @@ func newRootCommand(out io.Writer) *rootCommand {
 func (r *rootCommand) Name() string { return "mycontext" }
 
 func (r *rootCommand) Init(cd *simplecobra.Commandeer) error {
-	cd.CobraCommand.Short = "Manage per repository/branch contexts in ../.mycontext"
+	cd.CobraCommand.Short = "Manage per repository/branch contexts in ../_mycontext"
 	return nil
 }
 
