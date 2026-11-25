@@ -4,7 +4,7 @@ In my setup, `mymonorepo/bep/gocode/libs` is a `gitjoin` virtual monorepo with G
 
 What goes into a context is up to you. Some examples:
 
-* The current Claude Code session ID, to resume the session when picking up work on a branch (see below).
+* The current Claude Code or Antigravity session ID, to resume the session when picking up work on a branch (see below).
 * Reports from security researchers describing an issue to be fixed.
 * Notes and design documents for a feature.
 
@@ -61,4 +61,29 @@ And resume it with:
 
 ```bash
 claude --resume $(cat $(mycontext path --local)/claude-session)
+```
+
+### Antigravity (`agy`)
+
+Store the conversation ID for the current branch with a `SessionStart` [hook](https://antigravity.google/docs/hooks) in `.agents/hooks.json` (or globally in `~/.gemini/config/hooks.json`):
+
+```json
+{
+  "mycontext": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "in=$(cat) && cd \"$(printf '%s' \"$in\" | jq -r '.cwd // .workspacePaths[0]')\" && dir=$(mycontext path --local 2>/dev/null) && printf '%s' \"$in\" | jq -r .conversationId > \"$dir/agy-session\"; echo '{}'"
+      }
+    ]
+  }
+}
+```
+
+`agy` runs hooks from the directory containing `hooks.json` rather than the session's working directory (passed in `.cwd`) and expects JSON on stdout, so the command changes directory first and prints `{}`.
+
+And resume it with:
+
+```bash
+agy --resume $(cat $(mycontext path --local)/agy-session)
 ```
