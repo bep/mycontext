@@ -73,14 +73,14 @@ Store the conversation ID for the current branch with a `SessionStart` [hook](ht
     "SessionStart": [
       {
         "type": "command",
-        "command": "in=$(cat) && cd \"$(printf '%s' \"$in\" | jq -r '.cwd // .workspacePaths[0]')\" && dir=$(mycontext path --local 2>/dev/null) && printf '%s' \"$in\" | jq -r .conversationId > \"$dir/agy-session\"; echo '{}'"
+        "command": "in=$(cat) && printf '%s' \"$in\" | jq -e '(.lastUserInput // \"\") != \"\"' >/dev/null && cd \"$(printf '%s' \"$in\" | jq -r '.cwd // .workspacePaths[0]')\" && dir=$(mycontext path --local 2>/dev/null) && printf '%s' \"$in\" | jq -r .conversationId > \"$dir/agy-session\"; echo '{}'"
       }
     ]
   }
 }
 ```
 
-`agy` runs hooks from the directory containing `hooks.json` rather than the session's working directory (passed in `.cwd`) and expects JSON on stdout, so the command changes directory first and prints `{}`.
+`agy` runs hooks from the directory containing `hooks.json` rather than the session's working directory (passed in `.cwd`) and expects JSON on stdout, so the command changes directory first and prints `{}`. It also checks that `.lastUserInput` is non-empty to skip subagents (which trigger `SessionStart` with an empty `lastUserInput`).
 
 And resume it with:
 
